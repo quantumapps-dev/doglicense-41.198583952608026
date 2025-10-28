@@ -1,171 +1,144 @@
-"use client"
+"use client";
 
-import type React from "react"
+import { useState } from "react";
+import { Button } from "../../components/ui/button";
+import { Input } from "../../components/ui/input";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../components/ui/card";
+import { Badge } from "../../components/ui/badge";
+import { Search, Calendar, CheckCircle, Clock, XCircle } from "lucide-react";
 
-import { useState, useEffect } from "react"
-import { Button } from "../../components/ui/button"
-import { Input } from "../../components/ui/input"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../components/ui/card"
-import { Badge } from "../../components/ui/badge"
-import { Search, Calendar, CheckCircle, Clock, XCircle, User, Dog, FileText } from "lucide-react"
-import { toast } from "sonner"
-
-interface ApplicationData {
-  applicationId: string
-  formData: {
-    ownerFirstName: string
-    ownerLastName: string
-    ownerEmail: string
-    ownerPhone: string
-    dogName: string
-    dogBreed: string
-    dogAge: number
-    dogGender: string
-    spayedNeutered: string
-  }
-  status: string
-  submittedAt: string
+interface Application {
+  id: string;
+  status: "pending" | "in_progress" | "completed" | "rejected";
+  createdTime: string;
+  title: string;
+  description?: string;
 }
 
 export default function TrackApplication() {
-  const [applicationId, setApplicationId] = useState("")
-  const [application, setApplication] = useState<ApplicationData | null>(null)
-  const [isSearched, setIsSearched] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
-  const [isClient, setIsClient] = useState(false)
-
-  useEffect(() => {
-    setIsClient(true)
-  }, [])
+  const [applicationId, setApplicationId] = useState("");
+  const [application, setApplication] = useState<Application | null>(null);
+  const [isSearched, setIsSearched] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case "pending":
-        return "bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-400 dark:border-yellow-800"
+        return "bg-yellow-100 text-yellow-800 border-yellow-200";
       case "in_progress":
-        return "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800"
+        return "bg-blue-100 text-blue-800 border-blue-200";
       case "completed":
-        return "bg-green-100 text-green-800 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800"
+        return "bg-green-100 text-green-800 border-green-200";
       case "rejected":
-        return "bg-red-100 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-400 dark:border-red-800"
+        return "bg-red-100 text-red-800 border-red-200";
       default:
-        return "bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600"
+        return "bg-gray-100 text-gray-800 border-gray-200";
     }
-  }
+  };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
       case "pending":
-        return <Clock className="w-4 h-4" />
+        return <Clock className="w-4 h-4" />;
       case "in_progress":
-        return <Clock className="w-4 h-4" />
+        return <Clock className="w-4 h-4" />;
       case "completed":
-        return <CheckCircle className="w-4 h-4" />
+        return <CheckCircle className="w-4 h-4" />;
       case "rejected":
-        return <XCircle className="w-4 h-4" />
+        return <XCircle className="w-4 h-4" />;
       default:
-        return <Clock className="w-4 h-4" />
+        return <Clock className="w-4 h-4" />;
     }
-  }
+  };
 
   const formatDate = (dateString: string) => {
     try {
-      const date = new Date(dateString)
+      const date = new Date(dateString);
       return date.toLocaleDateString("en-US", {
         year: "numeric",
         month: "long",
         day: "numeric",
         hour: "2-digit",
         minute: "2-digit",
-      })
+      });
     } catch {
-      return "Invalid date"
+      return "Invalid date";
     }
-  }
+  };
 
   const searchApplication = () => {
-    if (!applicationId.trim()) {
-      toast.error("Please enter an application ID")
-      return
-    }
+    if (!applicationId.trim()) return;
 
-    if (!isClient) {
-      toast.error("Please wait while the page loads")
-      return
-    }
-
-    setIsLoading(true)
-    setIsSearched(true)
+    setIsLoading(true);
+    setIsSearched(true);
 
     // Simulate API call delay
     setTimeout(() => {
       try {
-        const storedApplication = localStorage.getItem(`application_${applicationId.trim()}`)
-        if (storedApplication) {
-          const parsedApp: ApplicationData = JSON.parse(storedApplication)
-          setApplication(parsedApp)
-          toast.success("Application found!")
+        const storedApplications = localStorage.getItem("quantum_applications");
+        if (storedApplications) {
+          const applications: Application[] = JSON.parse(storedApplications);
+          const foundApplication = applications.find(app => app.id === applicationId.trim());
+          setApplication(foundApplication || null);
         } else {
-          setApplication(null)
-          toast.error("Application not found")
+          setApplication(null);
         }
       } catch (error) {
-        console.error("[v0] Error reading from localStorage:", error)
-        setApplication(null)
-        toast.error("Error retrieving application")
+        console.error("Error reading from localStorage:", error);
+        setApplication(null);
       }
-      setIsLoading(false)
-    }, 500)
-  }
+      setIsLoading(false);
+    }, 500);
+  };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
-      searchApplication()
+      searchApplication();
     }
-  }
-
-  const calculateFee = (spayedNeutered: string) => {
-    return spayedNeutered === "Yes" ? 15 : 30
-  }
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white dark:from-gray-900 dark:to-gray-800 py-12">
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-12">
+      <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+          <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mx-auto mb-4">
             <Search className="w-8 h-8 text-blue-600 dark:text-blue-400" />
           </div>
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">Track Your Application</h1>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
+            Track Your Application
+          </h1>
           <p className="text-lg text-gray-600 dark:text-gray-300">
-            Enter your application ID to check the current status
+            Enter your application ID to check the current status and details of your submission.
           </p>
         </div>
 
         {/* Search Section */}
-        <Card className="mb-8 shadow-xl border-0 bg-white dark:bg-gray-800">
+        <Card className="mb-8 shadow-lg border-0 bg-white dark:bg-gray-800">
           <CardHeader className="text-center pb-4">
-            <CardTitle className="text-xl text-gray-900 dark:text-white">Find Your Application</CardTitle>
+            <CardTitle className="text-xl text-gray-900 dark:text-white">
+              Find Your Application
+            </CardTitle>
             <CardDescription className="text-gray-600 dark:text-gray-300">
-              Enter your unique application ID (e.g., DL-1234567890-ABC123)
+              Enter your unique application ID below
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Input
                 type="text"
-                placeholder="DL-1234567890-ABC123"
+                placeholder="e.g., APP-2024-001"
                 value={applicationId}
                 onChange={(e) => setApplicationId(e.target.value)}
                 onKeyPress={handleKeyPress}
-                className="text-center text-lg py-6 border-2 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white font-mono"
+                className="text-center text-lg py-3 border-2 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                 disabled={isLoading}
               />
             </div>
-            <Button
+            <Button 
               onClick={searchApplication}
-              disabled={isLoading || !applicationId.trim() || !isClient}
-              className="w-full py-6 text-lg bg-blue-600 hover:bg-blue-700"
+              disabled={isLoading || !applicationId.trim()}
+              className="w-full py-3 text-lg"
               size="lg"
             >
               {isLoading ? (
@@ -185,7 +158,7 @@ export default function TrackApplication() {
 
         {/* Results Section */}
         {isSearched && (
-          <Card className="shadow-xl border-0 bg-white dark:bg-gray-800">
+          <Card className="shadow-lg border-0 bg-white dark:bg-gray-800">
             <CardHeader>
               <CardTitle className="text-gray-900 dark:text-white">Search Results</CardTitle>
             </CardHeader>
@@ -201,138 +174,59 @@ export default function TrackApplication() {
                   <div className="border border-green-200 dark:border-green-700 bg-green-50 dark:bg-green-900/20 rounded-lg p-6">
                     <div className="flex items-start justify-between mb-4">
                       <div>
-                        <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-                          Dog License Application
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                          {application.title}
                         </h3>
                         <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">
-                          Application ID:{" "}
-                          <span className="font-mono font-medium text-blue-600 dark:text-blue-400">
-                            {application.applicationId}
-                          </span>
+                          Application ID: <span className="font-mono font-medium">{application.id}</span>
                         </p>
                       </div>
-                      <Badge className={`${getStatusColor(application.status)} flex items-center gap-1 px-3 py-1`}>
+                      <Badge className={`${getStatusColor(application.status)} flex items-center gap-1`}>
                         {getStatusIcon(application.status)}
                         {application.status.replace("_", " ").toUpperCase()}
                       </Badge>
                     </div>
 
-                    {/* Owner Information */}
-                    <div className="mb-6 pb-6 border-b border-green-200 dark:border-green-700">
-                      <div className="flex items-center gap-2 mb-3">
-                        <User className="w-5 h-5 text-blue-600" />
-                        <h4 className="text-sm font-semibold text-gray-900 dark:text-white">Owner Information</h4>
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                        <div>
-                          <span className="text-gray-500 dark:text-gray-400">Name:</span>
-                          <p className="font-medium text-gray-900 dark:text-white">
-                            {application.formData.ownerFirstName} {application.formData.ownerLastName}
-                          </p>
-                        </div>
-                        <div>
-                          <span className="text-gray-500 dark:text-gray-400">Email:</span>
-                          <p className="font-medium text-gray-900 dark:text-white">{application.formData.ownerEmail}</p>
-                        </div>
-                        <div>
-                          <span className="text-gray-500 dark:text-gray-400">Phone:</span>
-                          <p className="font-medium text-gray-900 dark:text-white">{application.formData.ownerPhone}</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Dog Information */}
-                    <div className="mb-6 pb-6 border-b border-green-200 dark:border-green-700">
-                      <div className="flex items-center gap-2 mb-3">
-                        <Dog className="w-5 h-5 text-blue-600" />
-                        <h4 className="text-sm font-semibold text-gray-900 dark:text-white">Dog Information</h4>
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                        <div>
-                          <span className="text-gray-500 dark:text-gray-400">Name:</span>
-                          <p className="font-medium text-gray-900 dark:text-white">{application.formData.dogName}</p>
-                        </div>
-                        <div>
-                          <span className="text-gray-500 dark:text-gray-400">Breed:</span>
-                          <p className="font-medium text-gray-900 dark:text-white">{application.formData.dogBreed}</p>
-                        </div>
-                        <div>
-                          <span className="text-gray-500 dark:text-gray-400">Age:</span>
-                          <p className="font-medium text-gray-900 dark:text-white">
-                            {application.formData.dogAge} years
-                          </p>
-                        </div>
-                        <div>
-                          <span className="text-gray-500 dark:text-gray-400">Gender:</span>
-                          <p className="font-medium text-gray-900 dark:text-white">{application.formData.dogGender}</p>
-                        </div>
-                        <div>
-                          <span className="text-gray-500 dark:text-gray-400">Spayed/Neutered:</span>
-                          <p className="font-medium text-gray-900 dark:text-white">
-                            {application.formData.spayedNeutered}
-                          </p>
-                        </div>
-                        <div>
-                          <span className="text-gray-500 dark:text-gray-400">License Fee:</span>
-                          <p className="font-medium text-blue-600 dark:text-blue-400">
-                            ${calculateFee(application.formData.spayedNeutered)}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Application Details */}
-                    <div className="mb-6">
-                      <div className="flex items-center gap-2 mb-3">
-                        <FileText className="w-5 h-5 text-blue-600" />
-                        <h4 className="text-sm font-semibold text-gray-900 dark:text-white">Application Details</h4>
-                      </div>
+                    <div className="grid grid-cols-1 gap-4">
                       <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
                         <Calendar className="w-4 h-4" />
-                        <span>Submitted: {formatDate(application.submittedAt)}</span>
+                        <span>Created: {formatDate(application.createdTime)}</span>
                       </div>
                     </div>
 
+                    {application.description && (
+                      <div className="mt-4 pt-4 border-t border-green-200 dark:border-green-700">
+                        <p className="text-sm text-gray-700 dark:text-gray-300">
+                          <strong>Description:</strong> {application.description}
+                        </p>
+                      </div>
+                    )}
+
                     {/* Status Timeline */}
-                    <div className="pt-6 border-t border-green-200 dark:border-green-700">
-                      <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">Application Timeline</h4>
-                      <div className="space-y-3">
-                        <div className="flex items-start gap-3">
-                          <div className="w-2 h-2 bg-green-500 rounded-full mt-1.5"></div>
-                          <div className="flex-1">
-                            <p className="text-sm font-medium text-gray-900 dark:text-white">Application Submitted</p>
-                            <p className="text-xs text-gray-500 dark:text-gray-400">
-                              {formatDate(application.submittedAt)}
-                            </p>
-                          </div>
+                    <div className="mt-6 pt-6 border-t border-green-200 dark:border-green-700">
+                      <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3">Application Timeline</h4>
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-3 text-sm">
+                          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                          <span className="text-gray-600 dark:text-gray-300">Application submitted</span>
+                          <span className="text-gray-400 dark:text-gray-500">({formatDate(application.createdTime)})</span>
                         </div>
                         {application.status !== "pending" && (
-                          <div className="flex items-start gap-3">
-                            <div className="w-2 h-2 bg-blue-500 rounded-full mt-1.5"></div>
-                            <div className="flex-1">
-                              <p className="text-sm font-medium text-gray-900 dark:text-white">Under Review</p>
-                              <p className="text-xs text-gray-500 dark:text-gray-400">Processing your application</p>
-                            </div>
+                          <div className="flex items-center gap-3 text-sm">
+                            <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                            <span className="text-gray-600 dark:text-gray-300">Application under review</span>
                           </div>
                         )}
                         {application.status === "completed" && (
-                          <div className="flex items-start gap-3">
-                            <div className="w-2 h-2 bg-green-500 rounded-full mt-1.5"></div>
-                            <div className="flex-1">
-                              <p className="text-sm font-medium text-gray-900 dark:text-white">Application Approved</p>
-                              <p className="text-xs text-gray-500 dark:text-gray-400">Your license has been issued</p>
-                            </div>
+                          <div className="flex items-center gap-3 text-sm">
+                            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                            <span className="text-gray-600 dark:text-gray-300">Application completed</span>
                           </div>
                         )}
                         {application.status === "rejected" && (
-                          <div className="flex items-start gap-3">
-                            <div className="w-2 h-2 bg-red-500 rounded-full mt-1.5"></div>
-                            <div className="flex-1">
-                              <p className="text-sm font-medium text-gray-900 dark:text-white">Application Rejected</p>
-                              <p className="text-xs text-gray-500 dark:text-gray-400">
-                                Please contact support for details
-                              </p>
-                            </div>
+                          <div className="flex items-center gap-3 text-sm">
+                            <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                            <span className="text-gray-600 dark:text-gray-300">Application rejected</span>
                           </div>
                         )}
                       </div>
@@ -340,21 +234,22 @@ export default function TrackApplication() {
                   </div>
                 </div>
               ) : (
-                <div className="text-center py-12">
-                  <div className="w-20 h-20 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <XCircle className="w-10 h-10 text-gray-400 dark:text-gray-500" />
+                <div className="text-center py-8">
+                  <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Search className="w-8 h-8 text-gray-400 dark:text-gray-500" />
                   </div>
-                  <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Application Not Found</h3>
-                  <p className="text-gray-600 dark:text-gray-300 mb-6">
-                    We couldn't find an application with ID:{" "}
-                    <span className="font-mono font-medium">{applicationId}</span>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                    Application Not Found
+                  </h3>
+                  <p className="text-gray-600 dark:text-gray-300 mb-4">
+                    We couldn't find an application with the ID "{applicationId}".
                   </p>
-                  <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 max-w-md mx-auto">
-                    <p className="text-sm text-yellow-800 dark:text-yellow-200 font-medium mb-2">Please check:</p>
-                    <ul className="text-sm text-yellow-700 dark:text-yellow-300 space-y-1 text-left">
-                      <li>✓ The application ID is correct</li>
-                      <li>✓ You're using the same browser and device</li>
-                      <li>✓ Browser storage hasn't been cleared</li>
+                  <div className="text-sm text-gray-500 dark:text-gray-400 space-y-1">
+                    <p>Please check:</p>
+                    <ul className="list-disc list-inside space-y-1 max-w-md mx-auto">
+                      <li>The application ID is correct</li>
+                      <li>The application was submitted on this device</li>
+                      <li>Your browser's local storage hasn't been cleared</li>
                     </ul>
                   </div>
                 </div>
@@ -365,22 +260,19 @@ export default function TrackApplication() {
 
         {/* Help Section */}
         {!isSearched && (
-          <Card className="mt-8 shadow-xl border-0 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
+          <Card className="mt-8 shadow-lg border-0 bg-white dark:bg-gray-800">
             <CardHeader>
-              <CardTitle className="text-gray-900 dark:text-white flex items-center gap-2">
-                <FileText className="w-5 h-5 text-blue-600" />
-                Need Help?
-              </CardTitle>
+              <CardTitle className="text-gray-900 dark:text-white">Need Help?</CardTitle>
             </CardHeader>
-            <CardContent className="text-sm text-gray-700 dark:text-gray-300 space-y-2">
+            <CardContent className="text-sm text-gray-600 dark:text-gray-300 space-y-2">
               <p>• Application IDs are generated when you submit a new application</p>
-              <p>• IDs follow the format: DL-[timestamp]-[random code]</p>
-              <p>• Make sure you're using the same browser where you submitted</p>
-              <p>• Applications are stored locally on your device</p>
+              <p>• Make sure you're using the same browser and device where you submitted your application</p>
+              <p>• If you can't find your application ID, try creating a new application</p>
+              <p>• Contact support if you continue to experience issues</p>
             </CardContent>
           </Card>
         )}
       </div>
     </div>
-  )
+  );
 }
